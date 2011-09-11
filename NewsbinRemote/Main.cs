@@ -66,81 +66,6 @@ namespace NewsbinRemote
             
         }
 
-        private void OnTest(object sender, EventArgs e)
-        {
-            StatusList.Items.Clear();
-            if (bIsConnected != true)
-            {
-                return;
-            }
-            try
-            {
-                m_Command.FilterAddGroup("anime/video");
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                m_Command.FilterSetMinSize(1000000);
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                m_Command.FilterSetMaxSize(5000000000);
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                m_Command.LoadGroup(10, 0);
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                long nCount = m_Command.LoadedCount();
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                if (nCount > 0)
-                {
-                    m_Command.LoadedList(1, nCount);
-                    StringBuilder Lines = new StringBuilder();
-
-                    int nLength = m_Command.ReadListItem(ref Lines);
-                    while (0 != nLength)
-                    {
-                        StatusList.Items.Add(new ListViewItem(Lines.ToString()));
-                        nLength = m_Command.ReadListItem(ref Lines);
-                    }
-                }
-
-
-                m_Command.FilterSetTextFilter("gundam");
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                nCount = m_Command.LoadedCount();
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-                if (nCount > 0)
-                {
-                    m_Command.LoadedList(1, nCount);
-                    StringBuilder Lines = new StringBuilder();
-
-                    int nLength = m_Command.ReadListItem(ref Lines);
-                    while (0 != nLength)
-                    {
-                        StatusList.Items.Add(new ListViewItem(Lines.ToString()));
-                        nLength = m_Command.ReadListItem(ref Lines);
-                    }
-                }
-
-                m_Command.NZBUpload(@"X:\Test NZBs\Deadwood S02 720p BluRay x264 CtrlHD.nzb");
-
-                m_Command.FileCount();
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-//                m_Command.FileRetrieve(1, @"X:\Temp\");
-
-                StatusList.Items.Add(new ListViewItem(m_Command.GetReplyString()));
-
-            
-            }
-            catch (SocketException se)
-            {
-                ListViewItem item1 = new ListViewItem(se.Message);
-                StatusList.Items.Add(item1);
-            }
-        }
-
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
@@ -156,7 +81,6 @@ namespace NewsbinRemote
 
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "NZB files (*.nzb|*.nzb|All files (*.*)|*.*";
-            dialog.InitialDirectory = @"X:\";
             dialog.Title = "Select a text file";
 
             if (dialog.ShowDialog() == DialogResult.OK)
@@ -193,7 +117,6 @@ namespace NewsbinRemote
 
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "NZB files (*.nzb|*.nzb|All files (*.*)|*.*";
-            dialog.InitialDirectory = @"X:\";
             dialog.Title = "Select a text file";
 
             if (dialog.ShowDialog() == DialogResult.OK)
@@ -317,20 +240,23 @@ namespace NewsbinRemote
 
         private void OnUploadFiles(object sender, EventArgs e)
         {
-            String  sPath = @"X:\Temp\";
-            ListView.SelectedListViewItemCollection Selected = StatusList.SelectedItems;
-            foreach (ListViewItem item in Selected)
-            {
-                string[] vResults = item.SubItems[0].Text.Split('\t');
-                Debug.Assert(vResults.Length >= 2);
-                if (vResults.Length < 2)
-                {
-                    Debug.Assert(vResults.Length < 2);
-                    return;
-                }
-                int nIndex = int.Parse(vResults[0]);
-                m_Command.FileRetrieve(nIndex,sPath);
-            }
+			if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+			{
+				string sPath = folderBrowserDialog1.SelectedPath;
+				ListView.SelectedListViewItemCollection Selected = StatusList.SelectedItems;
+				foreach (ListViewItem item in Selected)
+				{
+					string[] vResults = item.SubItems[0].Text.Split('\t');
+					Debug.Assert(vResults.Length >= 2);
+					if (vResults.Length < 2)
+					{
+						Debug.Assert(vResults.Length < 2);
+						return;
+					}
+					int nIndex = int.Parse(vResults[0]);
+					m_Command.FileRetrieve(nIndex, sPath);
+				}
+			}
         }
     }
 }
