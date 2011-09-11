@@ -31,7 +31,8 @@ namespace NewsbinRemote
         private void 
         OnConnect(object sender, EventArgs e)
         {
-            IPAddress[] addrs = Dns.GetHostEntry("10.0.1.6").AddressList;
+			string host = m_IPAddress.Text; 
+            IPAddress[] addrs = Dns.GetHostEntry(host).AddressList;
 
             Properties.Settings.Default.IPAddress = m_IPAddress.Text;
             Properties.Settings.Default.Port = m_Port.Text;
