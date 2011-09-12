@@ -243,6 +243,7 @@ namespace NewsbinRemote
 			if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
 			{
 				string sPath = folderBrowserDialog1.SelectedPath;
+                sPath += "\\";  // append backslash on the end
 				ListView.SelectedListViewItemCollection Selected = StatusList.SelectedItems;
 				foreach (ListViewItem item in Selected)
 				{
@@ -257,6 +258,30 @@ namespace NewsbinRemote
 					m_Command.FileRetrieve(nIndex, sPath);
 				}
 			}
+        }
+
+        private void Main_Load(object sender, EventArgs e)
+        {
+            // Set up tooltips
+
+            System.Windows.Forms.ToolTip ToolTip1 = new System.Windows.Forms.ToolTip();
+            ToolTip1.SetToolTip(this.button1, "Connect to Newsbin");  // Connect button
+            ToolTip1.SetToolTip(this.button2, "Add a group or group folder for use by Search or Load");  // Add Group button
+            ToolTip1.SetToolTip(this.m_ListFiles, "List downloaded files from the Files tab");  // List Files button
+            ToolTip1.SetToolTip(this.button3, "Load headers for specified group of group folder");  // Load Group button
+            ToolTip1.SetToolTip(this.button4, "Send an NZB file to Newsbin");  // Upload NZB button
+            ToolTip1.SetToolTip(this.button6, "Clear Group filter");  // Clear Groups button
+            ToolTip1.SetToolTip(this.button7, "Retrieve selected file from Newsbin to this machine");  // Upload Files button
+            ToolTip1.SetToolTip(this.button8, "Queue selected files for download");  // Download Files button
+            ToolTip1.SetToolTip(this.button9, "List files in the Downloads tab");  // List Downloads button
+            ToolTip1.SetToolTip(this.button10, "Send NZB File to be processed by Newsbin");  // Autoload NZB button
+            ToolTip1.SetToolTip(this.m_IPAddress, "Enter IP Address of machine Newsbin is running on");  // IP Address entry form
+            ToolTip1.SetToolTip(this.m_Port, "Enter Port Newsbin is listening on (Default is 118)");  // Port entry form
+            ToolTip1.SetToolTip(this.m_Key, "Enter the same key used in the copy of Newsbin you are connecting to");  // Key entry form
+            ToolTip1.SetToolTip(this.m_GroupText, "Enter a group or group folder to use as a filter");  // Group entry form
+            ToolTip1.SetToolTip(this.m_MinAge, "Enter a minimum post age to use as a filter");  // Minimum Age entry form
+            ToolTip1.SetToolTip(this.m_MaxAge, "Enter a maximum post age to use as a filter");  // Maximum Age entry form
+            ToolTip1.SetToolTip(this.m_Password, "Enter the password you configured within Newsbin");  // Password entry form
         }
     }
 }
