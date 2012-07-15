@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
-namespace NewsbinRemote
+namespace Newsbin.Remote.TestClient
 {
     public partial class Options : Form
     {

@@ -1,4 +1,4 @@
-﻿namespace NewsbinRemote
+﻿namespace Newsbin.Remote.TestClient
 {
     partial class Options
     {
