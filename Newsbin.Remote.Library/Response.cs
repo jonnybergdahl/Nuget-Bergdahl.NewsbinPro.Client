@@ -5,10 +5,10 @@ namespace Newsbin.Remote
 {
     public class Response
     {
-        protected string statusCode = StatusCodes.ParseError;
+        protected StatusCode statusCode = StatusCode.ParseError;
         protected string message = "";
 
-        public string StatusCode
+        public StatusCode StatusCode
         {
             get { return this.statusCode; }
         }
@@ -25,7 +25,9 @@ namespace Newsbin.Remote
         {
             if (response.Length > 3)
             {
-                this.statusCode = response.Substring(0, 3);
+                int status;
+                if (int.TryParse(response.Substring(0, 3), out status))
+                    this.statusCode = (StatusCode)status;
                 this.message = response.Substring(3);
             }
             else

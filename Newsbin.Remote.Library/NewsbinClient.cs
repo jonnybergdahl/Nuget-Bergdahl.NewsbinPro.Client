@@ -75,30 +75,27 @@ namespace Newsbin.Remote
             if (this.ClientConnected != null)
                 this.ClientConnected(this, new ClientConnectedEventArgs());
 
-            this.streamReader = new StreamReader(client.GetStream(), Encoding.UTF8);
-            this.streamWriter = new StreamWriter(client.GetStream(), Encoding.UTF8);
+            this.streamReader = new StreamReader(client.GetStream());
+            this.streamWriter = new StreamWriter(client.GetStream());
 
             Response response = new Response(this.ReadLine());
             if (this.ClientReceivedResponse != null)
                 this.ClientReceivedResponse(this, new ClientReceivedResponseEventArgs(response));
 
-            if (response.StatusCode != StatusCodes.AuthNeedAuth)
+            if (response.StatusCode == StatusCode.AuthNeedAuth)
             {
-                DisposeConnection();
-                throw new CommunicationException("Unexpected response", Command.None, response);
+                string passwordSalt = "";
+                string[] strings = response.Message.Split('-');
+                if (strings.Length == 2)
+                {
+                    this.newsbinVersion = strings[0].Trim();
+                    passwordSalt = strings[1].Substring(1, 16);
+                }
+
+                response = SendCommand(Command.Auth, AuthenticationHelper.GetAuthString(this.password, passwordSalt));
             }
 
-            string passwordSalt = "";
-            string[] strings = response.Message.Split('-');
-            if (strings.Length == 2)
-            {
-                this.newsbinVersion = strings[0].Trim();
-                passwordSalt = strings[1].Substring(1, 16);
-            }
-
-            response = SendCommand(Command.Auth, AuthenticationHelper.GetAuthString(this.password, passwordSalt));
-
-            if (response.StatusCode != StatusCodes.OK)
+            if (response.StatusCode != StatusCode.OK)
             {
                 DisposeConnection();
                 throw new CommunicationException("Authentication failure", Command.Auth, response);
@@ -141,25 +138,25 @@ namespace Newsbin.Remote
         public bool GetBandwidthLimiterState()
         {
             Response response = SendCommand(Command.Bwl);
-            return response.StatusCode == StatusCodes.BW_LIMITER_ON;
+            return response.StatusCode == StatusCode.StatusBwLimiterOn;
         }
 
         public bool SetBandwidthLimiterState(bool state)
         {
             Response response = SendCommand(Command.Bwl, state ? "ON" : "OFF");
-            return response.StatusCode == (state ? StatusCodes.BW_LIMITER_ON : StatusCodes.STATUS_BW_LIMITER_OFF);
+            return response.StatusCode == StatusCode.StatusBwLimiterOn;
         }
 
         public bool GetPausedState()
         {
             Response response = SendCommand(Command.Pause);
-            return response.StatusCode == StatusCodes.STATUS_PAUSE_ON;
+            return response.StatusCode == StatusCode.StatusPauseOn;
         }
 
         public bool SetPausedState(bool state)
         {
             Response response = SendCommand(Command.Pause, state ? "ON" : "OFF");
-            return response.StatusCode == (state ? StatusCodes.BW_LIMITER_ON : StatusCodes.STATUS_BW_LIMITER_OFF);
+            return response.StatusCode == StatusCode.StatusPauseOn;
         }
 
         #endregion
@@ -340,9 +337,15 @@ namespace Newsbin.Remote
             SendCommand(Command.LoadedClear);
         }
 
-        public void FindLoaded(string text)
+        public IEnumerable<GroupFileSet> FindLoaded(string text)
         {
-            SendCommand(Command.LoadedFind, text);
+            ListResponse response = SendListCommand(Command.LoadedFind, text);
+            List<GroupFileSet> result = new List<GroupFileSet>();
+            foreach (string set in response.ListItems)
+            {
+                result.Add(new GroupFileSet(set));
+            }
+            return result;
         }
 
         public void DownloadFromLoaded(int id)
@@ -374,13 +377,13 @@ namespace Newsbin.Remote
             SendCommand(Command.DownloadsUnlock);
         }
 
-        public IEnumerable<DownloadPartStatus> GetDownloadsList(int startIndex, int endIndex)
+        public IEnumerable<DownloadFileSet> GetDownloadsList(int startIndex, int endIndex)
         {
-            ListResponse response = SendListCommand(Command.DownloadsList, startIndex.ToString(), endIndex.ToString());            
-            List<DownloadPartStatus> result = new List<DownloadPartStatus>();
+            ListResponse response = SendListCommand(Command.DownloadsList, startIndex.ToString(), endIndex.ToString());
+            List<DownloadFileSet> result = new List<DownloadFileSet>();
             foreach (string set in response.ListItems)
             {
-                result.Add(new DownloadPartStatus(set));
+                result.Add(new DownloadFileSet(set));
             }
             return result;            
         }
@@ -451,7 +454,7 @@ namespace Newsbin.Remote
 
         public IEnumerable<FilesFileSet> GetFilesList(int startIndex, int endIndex)
         {
-            ListResponse response = SendListCommand(Command.LoadedList, startIndex.ToString(), endIndex.ToString());
+            ListResponse response = SendListCommand(Command.FilesList, startIndex.ToString(), endIndex.ToString());
             List<FilesFileSet> result = new List<FilesFileSet>();
             foreach (string set in response.ListItems)
             {
@@ -460,10 +463,31 @@ namespace Newsbin.Remote
             return result;
         }
 
-        public void DownloadFromFiles(int id)
+        public void DownloadFromFiles(string fileName, int id)
         {
-            // Commands.FilesDownload
-            throw new NotImplementedException();
+            using (Stream stream = new FileStream(fileName, FileMode.CreateNew, FileAccess.Write))
+            {
+                DownloadFromFiles(stream, id);
+            }
+        }
+
+        public void DownloadFromFiles(Stream stream, int id)
+        {
+            Response response = SendCommand(Command.FilesDownload, id.ToString());
+            if (response.StatusCode == StatusCode.StatusPostData)
+            {
+                byte[] buffer = new byte[4 * 1024];
+                int bytesRead;
+                do
+                {
+                    bytesRead = client.GetStream().Read(buffer, 0, buffer.Length);
+                    stream.Write(buffer, 0, bytesRead);
+                }
+                while (bytesRead == buffer.Length);
+                response = new Response(this.ReadLine());
+            }
+            if (response.StatusCode == StatusCode.OK)
+                throw new CommunicationException("Download error", Command.FilesDownload, response);            
         }
 
         #endregion
@@ -495,10 +519,32 @@ namespace Newsbin.Remote
 
         #region Upload methods
 
-        public void UploadNzb(Stream stream)
+        public void UploadNzb(string fileName)
         {
-            // Commands.UploadNzbBinary
-            throw new NotImplementedException();
+            using (Stream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+            {
+                UploadNzb(Path.GetFileName(fileName), stream, stream.Length);
+            }
+        }
+
+        public void UploadNzb(string fileName, Stream stream, long size)
+        {
+            Response response = SendCommand(Command.UploadNzbBinary, fileName, size.ToString());
+            if (response.StatusCode == StatusCode.StatusPostData)
+            {
+                int bytesRead;
+                byte[] buffer = new byte[4 * 1024];
+                do
+                {
+                    bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    client.GetStream().Write(buffer, 0, bytesRead);
+                }
+                while (bytesRead == buffer.Length);
+                response = new Response(this.ReadLine());
+            }
+
+            if (response.StatusCode != StatusCode.OK)
+                throw new CommunicationException("NZB Upload error", Command.UploadNzbBinary, response);
         }
 
         #endregion
@@ -540,7 +586,7 @@ namespace Newsbin.Remote
             if (this.ClientReceivedResponse != null)
                 this.ClientReceivedResponse(this, new ClientReceivedResponseEventArgs(response));
 
-            if (response.StatusCode == StatusCodes.ParseError)
+            if (response.StatusCode == StatusCode.ParseError)
                 throw new CommunicationException("Error", command, response);
             return response;
         }
@@ -570,9 +616,9 @@ namespace Newsbin.Remote
             if (this.ClientReceivedResponse != null)
                 this.ClientReceivedResponse(this, new ClientReceivedResponseEventArgs(result));
 
-            if (result.StatusCode == StatusCodes.ParseError)
+            if (result.StatusCode == StatusCode.ParseError)
                 throw new CommunicationException("Error", command, result);
-            if (result.StatusCode != StatusCodes.OK)
+            if (result.StatusCode != StatusCode.OK)
                 throw new CommunicationException(result.Message, command, result);
 
             string data = ReadLine();
@@ -599,7 +645,7 @@ namespace Newsbin.Remote
         public long SendLongCommand(Command command, string argument1, string argument2)
         {
             Response response = SendCommand(command, argument1, argument2);
-            if (response.StatusCode == StatusCodes.OK)
+            if (response.StatusCode == StatusCode.OK)
             {
                 string[] strings = response.Message.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 return long.Parse(strings[0]);

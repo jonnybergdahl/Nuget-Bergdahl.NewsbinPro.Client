@@ -13,7 +13,7 @@ namespace Newsbin.Remote
         Unpack
     }
 
-    public class DownloadsFileSet
+    public class DownloadFileSet
     {
         protected int id;
         protected FileSetType fileSetType;
@@ -54,7 +54,7 @@ namespace Newsbin.Remote
         }
 
 
-        public DownloadsFileSet(string data)
+        public DownloadFileSet(string data)
         {
             this.partStatus = new DownloadPartStatus();
             string[] strings = data.Split('\t');
