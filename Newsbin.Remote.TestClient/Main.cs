@@ -114,7 +114,6 @@ namespace Newsbin.Remote.TestClient
                     lArgument1.Text = "Age";
                     break;
                 case Command.FilterSetTextFilter:
-                case Command.LoadedFind:
                 case Command.DownloadsFind:
                     arguments = 1;
                     lArgument1.Text = "Search string";
@@ -135,10 +134,14 @@ namespace Newsbin.Remote.TestClient
                 case Command.DownloadsMoveDown:
                 case Command.DownloadsMoveTop:
                 case Command.DownloadsMoveBottom:
-                case Command.FilesDownload:
                 case Command.WishDownload:
                     arguments = 1;
                     lArgument1.Text = "Set id";
+                    break;
+                case Command.FilesDownload:
+                    arguments = 2;
+                    lArgument1.Text = "File name";
+                    lArgument2.Text = "Set id";
                     break;
                 case Command.FilterSetProfile:
                     arguments = 1;
@@ -164,6 +167,10 @@ namespace Newsbin.Remote.TestClient
                     lArgument1.Text = "Start index";
                     lArgument2.Text = "End index";
                     break;
+                case Command.LoadedFind:
+                    arguments = 1;
+                    lArgument1.Text = "Search string";
+                    break;
                 case Command.LoadedSort:
                 case Command.DownloadsSort:
                     arguments = 2;
@@ -174,6 +181,10 @@ namespace Newsbin.Remote.TestClient
                     arguments = 2;
                     lArgument1.Text = "Min index";
                     lArgument2.Text = "Max index";
+                    break;
+                case Command.UploadNzbBinary:
+                    arguments = 1;
+                    lArgument1.Text = "NZB File Name";
                     break;
             }
             lArgument1.Visible = arguments > 0;
@@ -278,6 +289,9 @@ namespace Newsbin.Remote.TestClient
                 case Command.FilterSetProfile:
                     client.SetFilterProfile(tbArgument1.Text);
                     break;
+                case Command.FilterClear:
+                    client.ClearFilters();
+                    break;
                 case Command.SearchLocal:
                     client.SearchLocal(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
                     break;
@@ -331,8 +345,8 @@ namespace Newsbin.Remote.TestClient
                     client.UnlockDownloads();
                     break;
                 case Command.DownloadsList:
-                    IEnumerable<DownloadPartStatus> downloads = client.GetDownloadsList(GetArgument1AsInt(), GetArgument2AsInt());
-                    foreach (DownloadPartStatus item in downloads)
+                    IEnumerable<DownloadFileSet> downloads = client.GetDownloadsList(GetArgument1AsInt(), GetArgument2AsInt());
+                    foreach (DownloadFileSet item in downloads)
                         lbResponse.Items.Add(item.ToString());
                     break;
                 case Command.DownloadsSort:
@@ -378,22 +392,22 @@ namespace Newsbin.Remote.TestClient
                         lbResponse.Items.Add(item.ToString());
                     break;
                 case Command.FilesDownload:
-                    client.DownloadFromFiles(GetArgument1AsInt());
+                    client.DownloadFromFiles(tbArgument1.Text, GetArgument2AsInt());
                     break;
                 case Command.WishCount:
                     lResult = client.GetWishCount();
                     lbResponse.Items.Add(lResult.ToString());
                     break;
                 case Command.WishList:                    
-                    IEnumerable<FilesFileSet> wishSets = client.GetWishList(GetArgument1AsInt(), GetArgument2AsInt());
-                    foreach (FilesFileSet item in wishSets)
+                    IEnumerable<WishFileSet> wishSets = client.GetWishList(GetArgument1AsInt(), GetArgument2AsInt());
+                    foreach (WishFileSet item in wishSets)
                         lbResponse.Items.Add(item.ToString());
                     break;
                 case Command.WishDownload:
                     client.DownloadFromWish(GetArgument1AsInt());
                     break;
                 case Command.UploadNzbBinary:
-                    // Not implemented
+                    client.UploadNzb(tbArgument1.Text);
                     break;
             }
         }
