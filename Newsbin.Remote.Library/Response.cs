@@ -28,7 +28,7 @@ namespace Newsbin.Remote
                 int status;
                 if (int.TryParse(response.Substring(0, 3), out status))
                     this.statusCode = (StatusCode)status;
-                this.message = response.Substring(3);
+                this.message = response.Substring(4);
             }
             else
             {

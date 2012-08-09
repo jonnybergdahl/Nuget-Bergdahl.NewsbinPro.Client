@@ -72,12 +72,24 @@ namespace Newsbin.Remote
             this.timeStamp += TimeSpan.FromSeconds(long.Parse(strings[3]));
             this.poster = strings[4];
             this.downloadPath = strings[5];
-            this.fileSize = long.Parse(strings[7]);
             this.statusString = strings[8];
-            string[] subStrings = this.statusString.Split(']');
+            string[] subStrings = this.statusString.Trim('[').Split(']');
             subStrings = subStrings[0].Split(' ');
             this.fileCount = int.Parse(subStrings[0]);
             this.parCount = int.Parse(subStrings[2]);
+        }
+
+        public override string ToString()
+        {
+            return String.Format("id={0};subject={1};fileSize={2};timeStamp={3};poster={4};downloadPath={5};fileCount={6};parCount={7}",
+                                this.id,
+                                this.subject,
+                                this.fileSize,
+                                this.timeStamp,
+                                this.poster,
+                                this.downloadPath,                                
+                                this.fileCount,
+                                this.parCount);
         }
     }
 }

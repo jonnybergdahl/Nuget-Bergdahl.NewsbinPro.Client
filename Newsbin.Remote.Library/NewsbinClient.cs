@@ -259,6 +259,11 @@ namespace Newsbin.Remote
             SendCommand(Command.FilterEnableFilters, enable ? "1" : "0");
         }
 
+        public void ClearFilters()
+        {
+            SendCommand(Command.FilterClear);
+        }
+
         public void MarkOld(int id)
         {
             SendCommand(Command.FilterMarkOld, id.ToString());
@@ -465,7 +470,7 @@ namespace Newsbin.Remote
 
         public void DownloadFromFiles(string fileName, int id)
         {
-            using (Stream stream = new FileStream(fileName, FileMode.CreateNew, FileAccess.Write))
+            using (Stream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
             {
                 DownloadFromFiles(stream, id);
             }
@@ -474,19 +479,26 @@ namespace Newsbin.Remote
         public void DownloadFromFiles(Stream stream, int id)
         {
             Response response = SendCommand(Command.FilesDownload, id.ToString());
-            if (response.StatusCode == StatusCode.StatusPostData)
+            if (response.StatusCode == StatusCode.OK)
             {
+                FilesDownloadItem downloadItem = new FilesDownloadItem(response.Message);
+                SendCommandWithoutResponse(Command.Continue);
+
                 byte[] buffer = new byte[4 * 1024];
-                int bytesRead;
-                do
+                long totalRead = 0;
+                int bytesRead = 0;
+                while (totalRead < downloadItem.FileSize)
                 {
-                    bytesRead = client.GetStream().Read(buffer, 0, buffer.Length);
+                    long bytesToRead = downloadItem.FileSize - totalRead;
+                    if (bytesToRead > buffer.Length)
+                        bytesToRead = buffer.Length;
+                    bytesRead = client.GetStream().Read(buffer, 0, (int)bytesToRead);
+                    totalRead += bytesToRead;
                     stream.Write(buffer, 0, bytesRead);
                 }
-                while (bytesRead == buffer.Length);
-                response = new Response(this.ReadLine());
+                response = GetResponse();
             }
-            if (response.StatusCode == StatusCode.OK)
+            if (response.StatusCode != StatusCode.OK)
                 throw new CommunicationException("Download error", Command.FilesDownload, response);            
         }
 
@@ -499,13 +511,13 @@ namespace Newsbin.Remote
             return SendLongCommand(Command.WishCount);
         }
 
-        public IEnumerable<FilesFileSet> GetWishList(int startIndex, int endIndex)
+        public IEnumerable<WishFileSet> GetWishList(int startIndex, int endIndex)
         {
-            ListResponse response = SendListCommand(Command.LoadedList, startIndex.ToString(), endIndex.ToString());
-            List<FilesFileSet> result = new List<FilesFileSet>();
+            ListResponse response = SendListCommand(Command.WishList, startIndex.ToString(), endIndex.ToString());
+            List<WishFileSet> result = new List<WishFileSet>();
             foreach (string set in response.ListItems)
             {
-                result.Add(new FilesFileSet(set));
+                result.Add(new WishFileSet(set));
             }
             return result;
         }
@@ -591,6 +603,14 @@ namespace Newsbin.Remote
             return response;
         }
 
+        public void SendCommandWithoutResponse(Command command)
+        {
+            string commandLine = CommandStrings.Strings[command];
+            this.WriteLine(commandLine);
+            if (this.ClientSentCommand != null)
+                this.ClientSentCommand(this, new ClientSentCommandEventArgs(commandLine));            
+        }
+
         public ListResponse SendListCommand(Command command)
         {
             return SendListCommand(command, "", "");
@@ -651,6 +671,11 @@ namespace Newsbin.Remote
                 return long.Parse(strings[0]);
             }
             return 0;
+        }
+
+        public Response GetResponse()
+        {
+            return new Response(this.ReadLine());
         }
 
         protected void WriteLine(string command)
