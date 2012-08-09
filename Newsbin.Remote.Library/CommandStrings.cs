@@ -34,6 +34,7 @@ namespace Newsbin.Remote
             this.Add(Command.FilterMarkOld, "FILTER MARKOLD");
             this.Add(Command.FilterMarkAllOld, "FILTER MARKOLD");
             this.Add(Command.FilterSetProfile, "FILTER SETPROFILE");
+            this.Add(Command.FilterClear, "FILTER CLEAR");
 
             this.Add(Command.SearchLocal, "SEARCH LOCAL");
             this.Add(Command.SearchInternet, "SEARCH INTERNET");
@@ -69,6 +70,7 @@ namespace Newsbin.Remote
             this.Add(Command.FilesCount, "FILES COUNT");
             this.Add(Command.FilesList, "FILES LIST");
             this.Add(Command.FilesDownload, "FILES DOWNLOAD");
+            this.Add(Command.Continue, "300 CONTINUE");
 
             this.Add(Command.WishCount, "WISH COUNT");
             this.Add(Command.WishList, "WISH LIST");

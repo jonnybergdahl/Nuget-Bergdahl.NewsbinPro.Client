@@ -32,6 +32,7 @@ namespace Newsbin.Remote
         FilterMarkOld,
         FilterMarkAllOld,
         FilterSetProfile,
+        FilterClear,
 
         SearchLocal,
         SearchInternet,
@@ -67,6 +68,7 @@ namespace Newsbin.Remote
         FilesCount,
         FilesList,
         FilesDownload,
+        Continue,
 
         WishCount,
         WishList,

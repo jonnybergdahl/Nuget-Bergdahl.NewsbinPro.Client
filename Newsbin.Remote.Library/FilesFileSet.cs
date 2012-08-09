@@ -55,5 +55,16 @@ namespace Newsbin.Remote
             this.poster = strings[4];
             this.fileName = strings[5];
         }
+
+        public override string ToString()
+        {
+            return String.Format("id={0};subject={1};fileSize={2};timeStamp={3};poster={4};fileName={5}",
+                                this.id,
+                                this.subject,
+                                this.fileSize,
+                                this.timeStamp,
+                                this.poster,
+                                this.fileName);
+        }
     }
 }
