@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Newsbin.Remote
 {
@@ -9,6 +10,12 @@ namespace Newsbin.Remote
     {
         protected Response response;
         protected List<string> responseList;
+		protected int threadId;
+
+		public int ThreadId
+		{
+			get { return this.threadId; }
+		}
 
         public Response Response
         {
@@ -31,6 +38,7 @@ namespace Newsbin.Remote
             this.response = response;
             this.responseList = new List<string>();
             this.responseList.AddRange(responseList);
+			this.threadId = Thread.CurrentThread.ManagedThreadId;
         }
     }
 }

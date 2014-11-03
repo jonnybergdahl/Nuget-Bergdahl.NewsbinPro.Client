@@ -31,21 +31,26 @@ namespace Newsbin.Remote.TestClient
 
         void ClientSentCommand(object sender, ClientSentCommandEventArgs e)
         {
-            Log("-> " + e.Command);
+            Log("-> (" + e.ThreadId.ToString() + ") " + e.Command);
         }
 
         void ClientRecievedListItem(object sender, ClientReceivedListItemEventArgs e)
         {
-            Log(" - " + e.ListItem);
+            Log(" - (" + e.ThreadId.ToString() + ") " + e.ListItem);
         }
 
         void ClientReceivedResponse(object sender, ClientReceivedResponseEventArgs e)
         {
-            Log("<- " + e.Response);
+            Log("<- (" + e.ThreadId.ToString() + ") " + e.Response);
         }
 
         void ClientDisconnected(object sender, ClientDisconnectedEventArgs e)
         {
+			if (bExuteCommand.InvokeRequired)
+			{
+				bExuteCommand.Invoke(new Action<object, ClientDisconnectedEventArgs>(ClientDisconnected), sender, e);
+				return;
+			}
             Log("Client disconnected");
             bExuteCommand.Enabled = false;
             bConnect.Enabled = true;
@@ -54,7 +59,12 @@ namespace Newsbin.Remote.TestClient
 
         void ClientConnected(object sender, ClientConnectedEventArgs e)
         {
-            Log("Client connected");
+			if (bExuteCommand.InvokeRequired)
+			{
+				bExuteCommand.Invoke(new Action<object, ClientConnectedEventArgs>(ClientConnected), sender, e);
+				return;
+			}
+			Log("Client connected");
             bExuteCommand.Enabled = true;
             bConnect.Enabled = false;
             bDisconnect.Enabled = true;
@@ -62,9 +72,14 @@ namespace Newsbin.Remote.TestClient
 
         protected void Log(string logLine)
         {
-            lbLog.Items.Add(logLine);
-            ScrollToLastLine(lbLog);
-        }
+			if (lbLog.InvokeRequired)
+			{
+				lbLog.Invoke(new Action<string>(Log), logLine);
+				return;
+			}
+			lbLog.Items.Add(logLine);
+			ScrollToLastLine(lbLog);
+		}
 
         protected void ScrollToLastLine(ListBox listBox)
         {
@@ -195,7 +210,7 @@ namespace Newsbin.Remote.TestClient
             tbArgument3.Visible = arguments > 2;
         }
 
-        private void bExuteCommand_Click(object sender, EventArgs e)
+        private async void bExuteCommand_Click(object sender, EventArgs e)
         {
             bool bResult;
             long lResult;
@@ -205,7 +220,11 @@ namespace Newsbin.Remote.TestClient
             switch (command)
             {
                 case Command.Status:
-                    NewsbinStatus status = client.GetStatus();
+                    NewsbinStatus status;
+					if (cbUseAsync.Checked)
+						status = await client.GetStatusAsync();
+					else
+						status = client.GetStatus();
                     lbResponse.Items.Add("DataFolderFreeSpace: " + status.DataFolderFreeSpace.ToString());
                     lbResponse.Items.Add("DownloadFolderFreeSpace: " + status.DownloadFolderFreeSpace.ToString());
                     lbResponse.Items.Add("QueuedFileSize: " + status.QueuedFileSize.ToString());
@@ -216,198 +235,373 @@ namespace Newsbin.Remote.TestClient
                     }                       
                     break;
                 case Command.Bwl:
-                    if (tbArgument1.Text == "")
-                        bResult = client.GetBandwidthLimiterState();
-                    else
-                        bResult = client.SetBandwidthLimiterState(GetArgument1AsBool());
+					if (tbArgument1.Text == "")
+					{
+						if (cbUseAsync.Checked)
+							bResult = await client.GetBandwidthLimiterStateAsync();
+						else
+							bResult = client.GetBandwidthLimiterState();
+					}
+					else
+					{
+						if (cbUseAsync.Checked)
+							bResult = await client.SetBandwidthLimiterStateAsync(GetArgument1AsBool());
+						else
+							bResult = client.SetBandwidthLimiterState(GetArgument1AsBool());
+					}
                     lbResponse.Items.Add(bResult.ToString());
                     break;
                 case Command.Pause:
-                    if (tbArgument1.Text == "")
-                        bResult = client.GetPausedState();
-                    else
-                        bResult = client.SetPausedState(GetArgument1AsBool());
+					if (tbArgument1.Text == "")
+					{
+						if (cbUseAsync.Checked)
+							bResult = await client.GetPausedStateAsync();
+						else
+							bResult = client.GetPausedState();
+					}
+					else
+					{
+						if (cbUseAsync.Checked)
+							bResult = await client.SetPausedStateAsync(GetArgument1AsBool());
+						else
+							bResult = client.SetPausedState(GetArgument1AsBool());
+					}
                     lbResponse.Items.Add(bResult.ToString());
                     break;
                 case Command.ListServers:
-                    listResult = client.ListServers();
+					if (cbUseAsync.Checked)
+						listResult = await client.ListServersAsync();
+					else
+						listResult = client.ListServers();
                     foreach (string item in listResult)
                         lbResponse.Items.Add(item);
                     break;
                 case Command.ListGogs:
-                    listResult = client.ListGogs();
+					if (cbUseAsync.Checked)
+						listResult = await client.ListGogsAsync();
+					else
+						listResult = client.ListGogs();
                     foreach (string item in listResult)
                         lbResponse.Items.Add(item);
                     break;
                 case Command.ListGroups:
-                    listResult = client.ListGroups();
+					if (cbUseAsync.Checked)
+						listResult = await client.ListGroupsAsync();
+					else
+						listResult = client.ListGroups();
                     foreach (string item in listResult)
                         lbResponse.Items.Add(item);
                     break;
                 case Command.ListChildren:
-                    listResult = client.ListChildren(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						listResult = await client.ListChildrenAsync(tbArgument1.Text);
+					else
+						listResult = client.ListChildren(tbArgument1.Text);
                     foreach (string item in listResult)
                         lbResponse.Items.Add(item);
                     break;
                 case Command.ListChildrenDetails:
-                    listResult = client.ListChildrenDetails(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						listResult = await client.ListChildrenDetailsAsync(tbArgument1.Text);
+					else
+						listResult = client.ListChildrenDetails(tbArgument1.Text);
                     foreach (string item in listResult)
                         lbResponse.Items.Add(item);
                     break;        
                 case Command.ListFilters:
-                    listResult = client.ListFilters();
+					if (cbUseAsync.Checked)
+						listResult = await client.ListFiltersAsync();
+					else
+						listResult = client.ListFilters();
                     foreach (string item in listResult)
                         lbResponse.Items.Add(item);
                     break;
                 case Command.FilterSetMinSize:
-                    client.SetFilterMinSize(GetArgument1AsLong());
+					if (cbUseAsync.Checked)
+						await client.SetFilterMinSizeAsync(GetArgument1AsLong());
+					else
+						client.SetFilterMinSize(GetArgument1AsLong());
                     break;
                 case Command.FilterSetMaxSize:
-                    client.SetFilterMaxSize(GetArgument1AsLong());
+					if (cbUseAsync.Checked)
+						await client.SetFilterMaxSizeAsync(GetArgument1AsLong());
+					else
+						client.SetFilterMaxSize(GetArgument1AsLong());
                     break;
                 case Command.FilterAddGroupFilter:
-                    client.AddGroupFilter(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						await client.AddGroupFilterAsync(tbArgument1.Text);
+					else
+						client.AddGroupFilter(tbArgument1.Text);
                     break;
                 case Command.FilterSetAge:
-                    client.SetFilterAge(GetArgument1AsLong());
+                    if (cbUseAsync.Checked)
+						await client.SetFilterAgeAsync(GetArgument1AsLong());
+					else
+						client.SetFilterAge(GetArgument1AsLong());
                     break;
                 case Command.FilterSetTextFilter:
-                    client.SetTextFilter(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						await client.SetTextFilterAsync(tbArgument1.Text);
+					else
+						client.SetTextFilter(tbArgument1.Text);
                     break;
                 case Command.FilterHideOld:
-                    client.HideOld(GetArgument1AsBool());
+					if (cbUseAsync.Checked)
+						await client.HideOldAsync(GetArgument1AsBool());
+					else
+						client.HideOld(GetArgument1AsBool());
                     break;
                 case Command.FilterEnableFilters:
-                    client.EnableFilters(GetArgument1AsBool());
+					if (cbUseAsync.Checked)
+						await client.EnableFiltersAsync(GetArgument1AsBool());
+					else
+						client.EnableFilters(GetArgument1AsBool());
                     break;
                 case Command.FilterMarkOld:
-                    client.MarkOld(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.MarkOldAsync(GetArgument1AsInt());
+					else
+						client.MarkOld(GetArgument1AsInt());
                     break;
                 case Command.FilterMarkAllOld:
-                    client.MarkAllOld();
+					if (cbUseAsync.Checked)
+						await client.MarkAllOldAsync();
+					else
+						client.MarkAllOld();
                     break;
                 case Command.FilterSetProfile:
-                    client.SetFilterProfile(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						await client.SetFilterProfileAsync(tbArgument1.Text);
+					else
+						client.SetFilterProfile(tbArgument1.Text);
                     break;
                 case Command.FilterClear:
-                    client.ClearFilters();
+					if (cbUseAsync.Checked)
+						await client.ClearFiltersAsync();
+					else
+						client.ClearFilters();
                     break;
                 case Command.SearchLocal:
-                    client.SearchLocal(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
+					if (cbUseAsync.Checked)
+						await client.SearchLocalAsync(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
+					else
+						client.SearchLocal(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
                     break;
                 case Command.SearchInternet:
-                    client.SearchInternet(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
+					if (cbUseAsync.Checked)
+						await client.SearchInternetAsync(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
+					else
+						client.SearchInternet(GetArgument1AsInt(), GetArgument2AsInt(), tbArgument3.Text);
                     break;
                 case Command.GroupLoad:
-                    lResult = client.LoadGroup(GetArgument1AsInt(), GetArgument2AsInt());
+					if (cbUseAsync.Checked)
+						lResult = await client.LoadGroupAsync(GetArgument1AsInt(), GetArgument2AsInt());
+					else
+						lResult = client.LoadGroup(GetArgument1AsInt(), GetArgument2AsInt());
                     lbResponse.Items.Add(lResult.ToString());
                     break;
                 case Command.GroupClear:
-                    client.ClearGroup();
+					if (cbUseAsync.Checked)
+						await client.ClearGroupAsync();
+					else
+						client.ClearGroup();
                     break;
                 case Command.GroupDelete:
-                    client.DeleteFromGroup(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DeleteFromGroupAsync(GetArgument1AsInt());
+					else
+						client.DeleteFromGroup(GetArgument1AsInt());
                     break;
                 case Command.LoadedCount:
-                    lResult = client.GetLoadedCount();
+					if (cbUseAsync.Checked)
+						lResult = await client.GetLoadedCountAsync();
+					else
+						lResult = client.GetLoadedCount();
                     lbResponse.Items.Add(lResult.ToString());
                     break;
                 case Command.LoadedList:
-                    IEnumerable<GroupFileSet> groupFileSet = client.ListLoaded(GetArgument1AsInt(), GetArgument2AsInt());
+					IEnumerable<GroupFileSet> groupFileSet;
+					if (cbUseAsync.Checked)
+						groupFileSet = await client.ListLoadedAsync(GetArgument1AsInt(), GetArgument2AsInt());
+					else
+						groupFileSet = client.ListLoaded(GetArgument1AsInt(), GetArgument2AsInt());
                     foreach (GroupFileSet item in groupFileSet)
                     {
                         lbResponse.Items.Add(item.ToString());
                     }
                     break;
                 case Command.LoadedSort:
-                    client.SortLoaded(GetArgument1AsInt(), GetArgument2AsBool());
+					if (cbUseAsync.Checked)
+						await client.SortLoadedAsync(GetArgument1AsInt(), GetArgument2AsBool());
+					else
+						client.SortLoaded(GetArgument1AsInt(), GetArgument2AsBool());
                     break;
                 case Command.LoadedClear:
-                    client.ClearLoaded();
+					if (cbUseAsync.Checked)
+	                    await client.ClearLoadedAsync();
+					else
+						client.ClearLoaded();
                     break;
                 case Command.LoadedFind:
-                    client.FindLoaded(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						await client.FindLoadedAsync(tbArgument1.Text);
+					else
+						client.FindLoaded(tbArgument1.Text);
                     break;
                 case Command.LoadedDownload:
-                    client.DownloadFromLoaded(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadFromLoadedAsync(GetArgument1AsInt());
+					else
+						client.DownloadFromLoaded(GetArgument1AsInt());
                     break;
                 case Command.LoadedGetNzb:
-                    client.GetNzbFromLoaded(GetArgument1AsInt(), GetArgument2AsInt());
+					if (cbUseAsync.Checked)
+						await client.GetNzbFromLoadedAsync(GetArgument1AsInt(), GetArgument2AsInt());
+					else
+						client.GetNzbFromLoaded(GetArgument1AsInt(), GetArgument2AsInt());
                     break;
                 case Command.DownloadsCount:
-                    lResult = client.GetDownloadsCount();
+					if (cbUseAsync.Checked)
+						lResult = await client.GetDownloadsCountAsync();
+					else
+						lResult = client.GetDownloadsCount();
                     lbResponse.Items.Add(lResult.ToString());
                     break;
                 case Command.DownloadsLock:
-                    client.LockDownloads();
+					if (cbUseAsync.Checked)
+						await client.LockDownloadsAsync();
+					else
+						client.LockDownloads();
                     break;
                 case Command.DownloadsUnlock:
-                    client.UnlockDownloads();
+					if (cbUseAsync.Checked)
+						await client.UnlockDownloadsAsync();
+					else
+						client.UnlockDownloads();
                     break;
                 case Command.DownloadsList:
-                    IEnumerable<DownloadFileSet> downloads = client.GetDownloadsList(GetArgument1AsInt(), GetArgument2AsInt());
+					IEnumerable<DownloadFileSet> downloads;
+					if (cbUseAsync.Checked)
+						downloads = await client.GetDownloadsListAsync(GetArgument1AsInt(), GetArgument2AsInt());
+					else
+						downloads = client.GetDownloadsList(GetArgument1AsInt(), GetArgument2AsInt());
                     foreach (DownloadFileSet item in downloads)
                         lbResponse.Items.Add(item.ToString());
                     break;
                 case Command.DownloadsSort:
-                    client.SortDownloadsList(GetArgument1AsInt(), GetArgument2AsBool());
+					if (cbUseAsync.Checked)
+						await client.SortDownloadsListAsync(GetArgument1AsInt(), GetArgument2AsBool());
+					else
+						client.SortDownloadsList(GetArgument1AsInt(), GetArgument2AsBool());
                     break;
                 case Command.DownloadsClear:
-                    client.ClearDownloadList();
+					if (cbUseAsync.Checked)
+						await client.ClearDownloadListAsync();
+					else
+						client.ClearDownloadList();
                     break;
                 case Command.DownloadsFind:
-                    client.FindInDownloadList(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						await client.FindInDownloadListAsync(tbArgument1.Text);
+					else
+						client.FindInDownloadList(tbArgument1.Text);
                     break;
                 case Command.DownloadsAssemble:
-                    client.AssembleDownload(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.AssembleDownloadAsync(GetArgument1AsInt());
+					else
+						client.AssembleDownload(GetArgument1AsInt());
                     break;
                 case Command.DownloadsDelete:
-                    client.DeleteDownload(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DeleteDownloadAsync(GetArgument1AsInt());
+					else
+						client.DeleteDownload(GetArgument1AsInt());
                     break;
                 case Command.DownloadsPause:
+					if (cbUseAsync.Checked)
                     client.PauseDownload(GetArgument1AsInt());
                     break;
                 case Command.DownloadsResume:
-                    client.ResumeDownload(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.ResumeDownloadAsync(GetArgument1AsInt());
+					else
+						client.ResumeDownload(GetArgument1AsInt());
                     break;
                 case Command.DownloadsMoveUp:
-                    client.DownloadMoveUp(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadMoveUpAsync(GetArgument1AsInt());
+					else
+						client.DownloadMoveUp(GetArgument1AsInt());
                     break;
                 case Command.DownloadsMoveDown:
-                    client.DownloadMoveDown(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadMoveDownAsync(GetArgument1AsInt());
+					else
+						client.DownloadMoveDown(GetArgument1AsInt());
                     break;
                 case Command.DownloadsMoveTop:
-                    client.DownloadMoveTop(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadMoveTopAsync(GetArgument1AsInt());
+					else
+						client.DownloadMoveTop(GetArgument1AsInt());
                     break;
                 case Command.DownloadsMoveBottom:
-                    client.DownloadMoveBottom(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadMoveBottomAsync(GetArgument1AsInt());
+					else
+						client.DownloadMoveBottom(GetArgument1AsInt());
                     break;
                 case Command.FilesCount:
-                    lResult = client.GetFilesCount();
+					if (cbUseAsync.Checked)
+						lResult = await client.GetFilesCountAsync();
+					else
+						lResult = client.GetFilesCount();
                     lbResponse.Items.Add(lResult.ToString());
                     break;
                 case Command.FilesList:
-                    IEnumerable<FilesFileSet> fileSets = client.GetFilesList(GetArgument1AsInt(), GetArgument2AsInt());
+					IEnumerable<FilesFileSet> fileSets;
+					if (cbUseAsync.Checked)
+						fileSets = await client.GetFilesListAsync(GetArgument1AsInt(), GetArgument2AsInt());
+					else
+						fileSets = client.GetFilesList(GetArgument1AsInt(), GetArgument2AsInt());
                     foreach (FilesFileSet item in fileSets)
                         lbResponse.Items.Add(item.ToString());
                     break;
                 case Command.FilesDownload:
-                    client.DownloadFromFiles(tbArgument1.Text, GetArgument2AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadFromFilesAsync(tbArgument1.Text, GetArgument2AsInt());
+					else
+						client.DownloadFromFiles(tbArgument1.Text, GetArgument2AsInt());
                     break;
                 case Command.WishCount:
-                    lResult = client.GetWishCount();
+					if (cbUseAsync.Checked)
+						lResult = await client.GetWishCountAsync();
+					else
+						lResult = client.GetWishCount();
                     lbResponse.Items.Add(lResult.ToString());
                     break;
-                case Command.WishList:                    
-                    IEnumerable<WishFileSet> wishSets = client.GetWishList(GetArgument1AsInt(), GetArgument2AsInt());
+                case Command.WishList:
+					IEnumerable<WishFileSet> wishSets;
+					if (cbUseAsync.Checked)
+						wishSets = await client.GetWishListAsync(GetArgument1AsInt(), GetArgument2AsInt());
+					else
+						wishSets = client.GetWishList(GetArgument1AsInt(), GetArgument2AsInt());
                     foreach (WishFileSet item in wishSets)
                         lbResponse.Items.Add(item.ToString());
                     break;
                 case Command.WishDownload:
-                    client.DownloadFromWish(GetArgument1AsInt());
+					if (cbUseAsync.Checked)
+						await client.DownloadFromWishAsync(GetArgument1AsInt());
+					else
+						client.DownloadFromWish(GetArgument1AsInt());
                     break;
                 case Command.UploadNzbBinary:
-                    client.UploadNzb(tbArgument1.Text);
+					if (cbUseAsync.Checked)
+						await client.UploadNzbAsync(tbArgument1.Text);
+					else
+						client.UploadNzb(tbArgument1.Text);
                     break;
             }
         }
@@ -454,11 +648,12 @@ namespace Newsbin.Remote.TestClient
             return 0;
         }
 
-        private void bConnect_Click(object sender, EventArgs e)
+        private async void bConnect_Click(object sender, EventArgs e)
         {
             Properties.Settings.Default.IPAddress = m_IPAddress.Text;
             Properties.Settings.Default.Port = m_Port.Text;
             Properties.Settings.Default.Password = m_Password.Text;
+			Properties.Settings.Default.UseAsync = cbUseAsync.Checked;
             Properties.Settings.Default.Save();
 
             this.client = new NewsbinClient(m_IPAddress.Text, Convert.ToInt32(m_Port.Text), m_Password.Text);
@@ -467,12 +662,18 @@ namespace Newsbin.Remote.TestClient
             this.client.ClientReceivedResponse += new ClientReceivedResponseEventHandler(ClientReceivedResponse);
             this.client.ClientRecievedListItem += new ClientReceivedListItemEventHandler(ClientRecievedListItem);
             this.client.ClientSentCommand += new ClientSentCommandEventHandler(ClientSentCommand);
-            this.client.Connect();
+			if (cbUseAsync.Checked)
+				await this.client.ConnectAsync();
+			else
+				this.client.Connect();
         }
 
-        private void bDisconnect_Click(object sender, EventArgs e)
+        private async void bDisconnect_Click(object sender, EventArgs e)
         {
-            this.client.Disconnect();
+			if (cbUseAsync.Checked)
+				await this.client.DisconnectAsync();
+			else
+				this.client.Disconnect();
         }
     }
 }

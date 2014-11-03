@@ -1,13 +1,13 @@
-Newsbin Remote 2.0.0.0
-July 16, 2012
+Newsbin Remote 3.0.0.0
+November 3, 2014
 
-Completely new code. Includes the Newsbin Remote Library, a new library encapsulating the nitty gritty
-remote interface implementation details in a NewsbinClient class. Also includes a test client that can 
+Added async support to the Newsbin.Remote Library, a library that encapsulates all the nitty gritty
+remote interface implementation details in a NewsbinClient class. Also included is a test client that can 
 issue any call supported by the library.
  
 The Newsbin Remote Library can be used in any .NET application, including desktop and web projects.
 
-The solution is a VS2010 solution using .NET 3.5.
+The solution is a VS2013 solution using .NET 4.5.
 
 The file Newsbin.Remote.zip contains all source code, with a compiled version of the test client
 located in the Newsbin.Remote.TestClient/bin/Release folder.
@@ -19,7 +19,8 @@ To connect with the test client,
 1) Enter the IP address of the machine Newsbin is running on
 2) Enter the port that Newsbin will be listening on (default is 118)
 4) Enter the password (Set under Options/Remote Control within Newsbin)
-5) Click the "Connect" button
+5) Optionally, click the async checkbox to run all calls as async.
+6) Click the "Connect" button
 
 Status:
 
@@ -27,6 +28,10 @@ Status:
 - NZB file upload is not hooked up.
 
 Change Log:
+
+11/1/14 3.0.0.0
+
+- Added Async support
 
 7/17/12 2.0.0.0.b2
 
