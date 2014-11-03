@@ -1,16 +1,17 @@
 Newsbin Remote 3.0.0.0
 November 3, 2014
 
-Added async support to the Newsbin.Remote Library, a library that encapsulates all the nitty gritty
-remote interface implementation details in a NewsbinClient class. Also included is a test client that can 
-issue any call supported by the library.
+Added async support to the Newsbin.Remote Library, a library that encapsulates all the nitty 
+gritty remote interface implementation details in a NewsbinClient class. Also included is a 
+test client that can issue any call supported by the library.
  
-The Newsbin Remote Library can be used in any .NET application, including desktop and web projects.
+The Newsbin Remote Library can be used in any .NET application, including desktop and web 
+projects.
 
 The solution is a VS2013 solution using .NET 4.5.
 
-The file Newsbin.Remote.zip contains all source code, with a compiled version of the test client
-located in the Newsbin.Remote.TestClient/bin/Release folder.
+The file Newsbin.Remote.zip contains all source code, with a compiled version of the test 
+client located in the Newsbin.Remote.TestClient/bin/Release folder.
 
 The file nbremote.rar contains the original deprecated code.
 
