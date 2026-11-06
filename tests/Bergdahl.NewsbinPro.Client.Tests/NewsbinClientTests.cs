@@ -288,7 +288,7 @@ public class NewsbinClientTests
         await client.ConnectAsync();
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetStatusAsync(cts.Token)).WaitAsync(Timeout);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetStatusAsync(cts.Token)).WithTimeout(Timeout);
 
         Assert.False(client.Connected);
     }
@@ -304,7 +304,7 @@ public class NewsbinClientTests
         using NewsbinClient client = server.CreateClient();
         await client.ConnectAsync();
 
-        await Assert.ThrowsAnyAsync<Exception>(() => client.GetStatusAsync()).WaitAsync(Timeout);
+        await Assert.ThrowsAnyAsync<Exception>(() => client.GetStatusAsync()).WithTimeout(Timeout);
     }
 
     [Fact]
