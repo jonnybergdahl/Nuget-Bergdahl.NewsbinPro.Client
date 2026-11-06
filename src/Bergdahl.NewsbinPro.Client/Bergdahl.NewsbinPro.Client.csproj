@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <!-- Implicit usings differ between .NET Framework and .NET, so usings are explicit. -->
+        <ImplicitUsings>disable</ImplicitUsings>
+        <RootNamespace>Bergdahl.NewsbinPro.Client</RootNamespace>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+        <!-- Default version for local builds; CI overrides it from the git tag. -->
+        <Version>4.0.0</Version>
+
+        <!-- NuGet package metadata -->
+        <IsPackable>true</IsPackable>
+        <PackageId>Bergdahl.NewsbinPro.Client</PackageId>
+        <Authors>Jonny Bergdahl</Authors>
+        <Company>Bergdahl IT AB</Company>
+        <Product>Bergdahl.NewsbinPro.Client</Product>
+        <Copyright>Copyright © 2011-2026 Jonny Bergdahl</Copyright>
+        <Description>A .NET client for the Newsbin Pro remote control interface: search Usenet, load groups, queue and manage downloads, browse the wish list and upload NZB files.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>newsbin;newsbin-pro;usenet;nzb;remote-control</PackageTags>
+
+        <RepositoryUrl>https://github.com/jonnybergdahl/Nuget-Bergdahl.NewsbinPro.Client</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageProjectUrl>https://github.com/jonnybergdahl/Nuget-Bergdahl.NewsbinPro.Client</PackageProjectUrl>
+
+        <!-- Show README on nuget.org -->
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <!-- SourceLink (built into the .NET 8+ SDK) -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+        <!-- Symbols (.snupkg) -->
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Ensure the repo-root README.md is packed -->
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Bergdahl.NewsbinPro.Client.Tests" />
+    </ItemGroup>
+
+</Project>
